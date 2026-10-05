@@ -5,7 +5,7 @@ import Menu from "./pages/Menu";
 import AddTransaction from "./pages/AddTransaction";
 import Settings from "./pages/Settings";
 
-import BottomNav from "./components/BottomNav";
+import BottomNav from "./Components/BottomNav";
 
 function App() {
   const [page, setPage] = useState("home");
