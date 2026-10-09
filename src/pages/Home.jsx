@@ -10,10 +10,11 @@ function Home({ transactions }) {
 
   const balance = income - expenses;
 
-  const total = income + expenses;
-
   const expensePercent =
-    total === 0 ? 0 : (expenses / total) * 100;
+    income === 0 ? 0 : Math.min((expenses / income) * 100, 100);
+
+  const balancePercent =
+    income === 0 ? 0 : Math.max((balance / income) * 100, 0);
 
   return (
     <div className="min-h-screen bg-gray-100 px-5 py-6 pb-24">
@@ -42,7 +43,7 @@ function Home({ transactions }) {
             className="flex h-40 w-40 items-center justify-center rounded-full"
             style={{
               background:
-                total === 0
+                income === 0
                   ? "#e5e7eb"
                   : `conic-gradient(
                       #fb923c 0% ${expensePercent}%,
@@ -57,7 +58,11 @@ function Home({ transactions }) {
                 Balance
               </span>
 
-              <span className="mt-1 text-2xl font-bold text-gray-900">
+              <span
+                className={`mt-1 text-2xl font-bold ${
+                  balance < 0 ? "text-red-500" : "text-gray-900"
+                }`}
+              >
                 ฿{balance.toLocaleString()}
               </span>
 
