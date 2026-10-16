@@ -13,6 +13,41 @@ function History({ transactions, deleteTransactions }) {
       : transactions.filter(
           (transaction) => transaction.type === filter
         );
+  const groupedTransactions = filteredTransactions.reduce(
+    (groups, transaction) => {
+      const date = new Date(transaction.date);
+
+      const monthKey = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+      if (!groups[monthKey]) {
+        groups[monthKey] = [];
+      }
+
+      groups[monthKey].push(transaction);
+
+      return groups;
+    },
+    {}
+  );
+
+  const formatDate = (dateValue) => {
+    const date = new Date(dateValue);
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = String(date.getFullYear()).slice(-2);
+
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatMonth = (dateValue) => {
+    return new Date(dateValue).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+  };
 
   const handlePressStart = (id) => {
     const timer = setTimeout(() => {
@@ -119,76 +154,99 @@ function History({ transactions, deleteTransactions }) {
         </div>
       )}
 
-      <div className="space-y-3">
+        <div className="space-y-6">
         {filteredTransactions.length === 0 ? (
           <div className="rounded-xl bg-white p-6 text-center text-gray-500">
             No transactions
           </div>
         ) : (
-          filteredTransactions.map((transaction) => {
-            const isSelected = selectedIds.includes(transaction.id);
+          Object.keys(groupedTransactions)
+            .sort((a, b) => b.localeCompare(a))
+            .map((monthKey) => (
+              <div key={monthKey} className="space-y-3">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {formatMonth(monthKey)}
+                </h2>
 
-            return (
-              <div
-                key={transaction.id}
-                onPointerDown={() => {
-                  if (isSelecting) {
-                    toggleSelect(transaction.id);
-                  } else {
-                    handlePressStart(transaction.id);
-                  }
-                }}
-                onPointerUp={handlePressEnd}
-                onPointerLeave={handlePressEnd}
-                onContextMenu={(e) => e.preventDefault()}
-                className={`flex cursor-pointer items-center justify-between rounded-xl bg-white p-4 shadow-sm ${
-                  isSelected ? "ring-2 ring-orange-500" : ""
-                }`}
-              >
-                <div className="flex items-center gap-3">
+                {groupedTransactions[monthKey]
+                  .slice()
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date) - new Date(a.date)
+                  )
+                  .map((transaction) => {
+                    const isSelected = selectedIds.includes(
+                      transaction.id
+                    );
 
-                  {isSelecting && (
-                    <div
-                      className={`flex h-5 w-5 items-center justify-center rounded border ${
-                        isSelected
-                          ? "border-orange-500 bg-orange-500"
-                          : "border-gray-300 bg-white"
-                      }`}
-                    >
-                      {isSelected && (
-                        <span className="text-sm text-white">
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                  )}
+                    return (
+                      <div
+                        key={transaction.id}
+                        onPointerDown={() => {
+                          if (isSelecting) {
+                            toggleSelect(transaction.id);
+                          } else {
+                            handlePressStart(transaction.id);
+                          }
+                        }}
+                        onPointerUp={handlePressEnd}
+                        onPointerLeave={handlePressEnd}
+                        onContextMenu={(e) => e.preventDefault()}
+                        className={`cursor-pointer rounded-xl bg-white p-4 shadow-sm ${
+                          isSelected ? "ring-2 ring-orange-500" : ""
+                        }`}
+                      >
+                        <p className="mb-2 text-sm text-gray-500">
+                          {formatDate(transaction.date)}
+                        </p>
 
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {transaction.category || transaction.type}
-                    </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {isSelecting && (
+                              <div
+                                className={`flex h-5 w-5 items-center justify-center rounded border ${
+                                  isSelected
+                                    ? "border-orange-500 bg-orange-500"
+                                    : "border-gray-300 bg-white"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <span className="text-sm text-white">
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
-                    {transaction.remark && (
-                      <p className="text-sm text-gray-500">
-                        {transaction.remark}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {transaction.category || transaction.type}
+                              </p>
 
-                <p
-                  className={`font-semibold ${
-                    transaction.type === "expense"
-                      ? "text-orange-500"
-                      : "text-blue-500"
-                  }`}
-                >
-                  {transaction.type === "expense" ? "-" : "+"}
-                  ฿{transaction.amount}
-                </p>
+                              {transaction.remark && (
+                                <p className="text-sm text-gray-500">
+                                  {transaction.remark}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <p
+                            className={`font-semibold ${
+                              transaction.type === "expense"
+                                ? "text-orange-500"
+                                : "text-blue-500"
+                            }`}
+                          >
+                            {transaction.type === "expense" ? "-" : "+"}
+                            ฿{transaction.amount}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
-            );
-          })
+            ))
         )}
       </div>
 
